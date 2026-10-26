@@ -1,0 +1,19 @@
+# Unity-generated files
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Ll]ogs/
+[Bb]uild/
+[Bb]uilds/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# Local editor and user settings
+[Uu]serSettings/
+.vs/
+.idea/
+.vscode/
+
+# Operating system files
+.DS_Store
+Thumbs.db
