@@ -1,10 +1,12 @@
 using UnityEngine;
 using Unity.Entities;
+using Unity.Mathematics;
 
 public class UnitAuthoring : MonoBehaviour
 {
     public float health = 100f;
     public float movementSpeed = 5f;
+    public Vector3 destination = Vector3.zero;
 
     private class UnitBaker : Baker<UnitAuthoring> 
     {
@@ -19,6 +21,10 @@ public class UnitAuthoring : MonoBehaviour
             AddComponent(entity, new MovementSpeed 
             {
                 value_ = authoring.movementSpeed
+            });
+            AddComponent(entity, new Destination
+            {
+                value_ = authoring.destination
             });
         }
     }

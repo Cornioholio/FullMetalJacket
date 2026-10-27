@@ -11,9 +11,22 @@ public partial struct MovementSystem : ISystem
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
 
-        foreach (var (transform, speed) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<MovementSpeed>>())
+        foreach (var (transform, speed, destination) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<MovementSpeed>, RefRO<Destination>>())
         {
-            transform.ValueRW.Position += new float3(0f, 0f, speed.ValueRO.value_ * deltaTime);
+            float step = speed.ValueRO.value_ * deltaTime;
+
+            float3 currentPosition = transform.ValueRO.Position;
+            float3 targetPosition = destination.ValueRO.value_;
+
+            float3 direction = targetPosition - currentPosition;
+            float distance = math.length(direction);
+
+            if (distance > 0.01f)
+            {
+                float3 movement = math.normalize(direction) * math.min(step, distance);
+
+                transform.ValueRW.Position += movement;
+            }
         }
     }
 }
