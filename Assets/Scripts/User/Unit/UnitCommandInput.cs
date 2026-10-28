@@ -101,21 +101,21 @@ public class UnitCommandInput : MonoBehaviour
         }
 
         // Ensure the selected unit has membership data.
-        if (!entityManager.HasComponent<SquadMembership>(selectedEntity))
+        if (!entityManager.HasComponent<FormationMembership>(selectedEntity))
         {
             Debug.LogError(
-                "Selected unit has no SquadMembership component. " +
+                "Selected unit has no FormationMembership component. " +
                 "Check UnitAuthoring's Baker.");
             return;
         }
 
         // Create or update the assignment request.
-        var request = new SquadAssignmentRequest
+        var request = new FormationAssignmentRequest
         {
             value_ = squadEntity
         };
 
-        if (entityManager.HasComponent<SquadAssignmentRequest>(selectedEntity))
+        if (entityManager.HasComponent<FormationAssignmentRequest>(selectedEntity))
         {
             entityManager.SetComponentData(selectedEntity, request);
         }

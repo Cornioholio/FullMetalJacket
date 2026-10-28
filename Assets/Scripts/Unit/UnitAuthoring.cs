@@ -27,7 +27,7 @@ public class UnitAuthoring : MonoBehaviour
                 value_ = authoring.transform.position
             });
 
-            AddComponent(entity, new SquadMembership 
+            AddComponent(entity, new FormationMembership 
             {
                 value_ = Entity.Null
             });

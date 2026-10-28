@@ -32,20 +32,7 @@ public struct Selected : IComponentData
 }
 
 
-// SQUADS ----------------------------------------------------
-
-/// <summary>
-/// Records what squad a unit belongs to, owned by every unit.
-/// </summary>
-public struct SquadMembership : IComponentData
-{
-    public Entity value_;
-}
-
-/// <summary>
-/// Runtime squad assignment.
-/// </summary>
-public struct SquadAssignmentRequest : IComponentData
+public struct SquadMarker : IComponentData 
 {
     public Entity value_;
 }

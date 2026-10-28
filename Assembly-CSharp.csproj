@@ -73,10 +73,15 @@
     <Analyzer Include="C:\Users\Arran Montgomerie\source\repos\CMP304_FMJ\Library\PackageCache\com.unity.entities\Unity.Entities\SourceGenerators\Unity.Entities.Analyzer.CodeFixes.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\Markers\Systems\MarkerFollowSystem.cs" />
+    <Compile Include="Assets\Scripts\Formations\Components\CommonFormationComponents.cs" />
     <Compile Include="Assets\Scripts\Squad\SquadAuthoring.cs" />
-    <Compile Include="Assets\Scripts\Unit\Systems\SquadMembershipSystem.cs" />
+    <Compile Include="Assets\Scripts\Markers\MarkerPrefabAuthoring.cs" />
     <Compile Include="Assets\Scripts\User\Unit\UnitCommandInput.cs" />
+    <Compile Include="Assets\Scripts\Formations\Systems\FormationMembershipSystem.cs" />
     <Compile Include="Assets\Scripts\Squad\Components\CommonSquadComponents.cs" />
+    <Compile Include="Assets\Scripts\Markers\Systems\MarkerSpawnSystem.cs" />
+    <Compile Include="Assets\Scripts\Markers\Components\CommonMarkerComponents.cs" />
     <Compile Include="Assets\Scripts\Unit\Components\CommonUnitComponents.cs" />
     <Compile Include="Assets\Scripts\Unit\UnitAuthoring.cs" />
     <Compile Include="Assets\Scripts\Unit\Systems\MovementSystem.cs" />

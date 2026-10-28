@@ -1,21 +1,24 @@
 ﻿using UnityEngine;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine.Assertions.Must;
 
-public partial class SquadMembershipSystem : SystemBase 
+[BurstCompile]
+public partial class FormationMembershipSystem : SystemBase 
 {
+    [BurstCompile]
     protected override void OnUpdate()
     {
         // Find soldiers that have requested squad assignment.
-        EntityQuery requestQuery = GetEntityQuery(ComponentType.ReadOnly<SquadAssignmentRequest>(), ComponentType.ReadOnly<SquadMembership>());
+        EntityQuery requestQuery = GetEntityQuery(ComponentType.ReadOnly<FormationAssignmentRequest>(), ComponentType.ReadOnly<FormationMembership>());
         using NativeArray<Entity> units = requestQuery.ToEntityArray(Allocator.Temp);
 
         foreach (Entity unit in units) 
         {
             Debug.Log($"Processing squad assignment for {unit}");
-            SquadAssignmentRequest request = EntityManager.GetComponentData<SquadAssignmentRequest>(unit);
-            SquadMembership membership = EntityManager.GetComponentData<SquadMembership>(unit);
+            FormationAssignmentRequest request = EntityManager.GetComponentData<FormationAssignmentRequest>(unit);
+            FormationMembership membership = EntityManager.GetComponentData<FormationMembership>(unit);
 
             Entity newSquad = request.value_;
             Entity oldSquad = membership.value_;
@@ -29,7 +32,7 @@ public partial class SquadMembershipSystem : SystemBase
                 !EntityManager.Exists(newSquad) ||
                 !EntityManager.HasBuffer<SquadMember>(newSquad)) 
             {
-                EntityManager.RemoveComponent<SquadAssignmentRequest>(unit);
+                EntityManager.RemoveComponent<FormationAssignmentRequest>(unit);
                 continue;
             }
 
@@ -76,9 +79,9 @@ public partial class SquadMembershipSystem : SystemBase
             membership.value_ = newSquad;
 
             EntityManager.SetComponentData(unit, membership);
-            EntityManager.RemoveComponent<SquadAssignmentRequest>(unit);
+            EntityManager.RemoveComponent<FormationAssignmentRequest>(unit);
 
-            Debug.Log($"Membership after assignment: {EntityManager.GetComponentData<SquadMembership>(unit).value_}");
+            Debug.Log($"Membership after assignment: {EntityManager.GetComponentData<FormationMembership>(unit).value_}");
             Debug.Log($"New squad buffer length after assignment: {EntityManager.GetBuffer<SquadMember>(newSquad).Length}");
         }
 
