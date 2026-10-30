@@ -54,7 +54,7 @@ public partial struct FormationLayoutSystem : ISystem
 
                 // Position units across the formation, preserve y 
                 unitDestination.x += offset;
-                unitDestination.y += SystemAPI.GetComponent<LocalTransform>(unit).Position.y;
+                unitDestination.y = SystemAPI.GetComponent<LocalTransform>(unit).Position.y;
 
                 SystemAPI.SetComponent(unit, new Destination
                 {
