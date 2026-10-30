@@ -1,6 +1,8 @@
 using Unity.Entities;
 using Unity.Burst;
 using Unity.Transforms;
+using Unity.Mathematics;
+using Unity.Rendering;
 
 [BurstCompile]
 public partial class MarkerSpawnSystem : SystemBase 
@@ -37,6 +39,14 @@ public partial class MarkerSpawnSystem : SystemBase
 
             // Create a runtime instance of marker prefab
             Entity marker = EntityManager.Instantiate(prefabReference.value_);
+
+            if (!EntityManager.HasComponent<URPMaterialPropertyBaseColor>(marker)) 
+            {
+                EntityManager.AddComponentData(marker, new URPMaterialPropertyBaseColor
+                {
+                    Value = new float4(0.75f, 0.75f, 0.75f, 1f)
+                });
+            }
 
             // Link the marker to the owner
             EntityManager.AddComponentData(marker, new MarkerOwner

@@ -63,7 +63,7 @@ public class UnitCommandInput : MonoBehaviour
             squadQuery.Dispose();
         }
     }
-    private void AssignSelectedUnitToSquad()
+    private void AssignSelectedUnitToSquad(byte teamID)
     {
         if (selectedEntity == Entity.Null ||
             !entityManager.Exists(selectedEntity))
@@ -87,7 +87,7 @@ public class UnitCommandInput : MonoBehaviour
         {
             Squad squadData = entityManager.GetComponentData<Squad>(squad);
 
-            if (squadData.name_.ToString() == "Alpha Squad")
+            if (squadData.teamID_ == teamID)
             {
                 squadEntity = squad;
                 break;
@@ -232,7 +232,32 @@ public class UnitCommandInput : MonoBehaviour
                 entityManager.GetComponentData<LocalTransform>(selectedEntity).Position.y,
                 hitInfo.point.z);
 
-            // Only update the selected unit's destination.
+            // Check if selected is a 
+            if (entityManager.HasComponent<FormationMembership>(selectedEntity)) 
+            {
+                FormationMembership membership = entityManager.GetComponentData<FormationMembership>(selectedEntity);
+
+                Entity squadEntity = membership.value_;
+
+                // Validate squad membership
+                if (squadEntity != Entity.Null &&
+                    entityManager.Exists(squadEntity) &&
+                    entityManager.HasComponent<SquadMovementOrder>(squadEntity))
+                {
+                    SquadMovementOrder movementOrder = entityManager.GetComponentData<SquadMovementOrder>(squadEntity);
+
+                    movementOrder.destination_ = targetPosition;
+                    movementOrder.active_ = true;
+
+                    entityManager.SetComponentData(squadEntity, movementOrder);
+
+                    Debug.Log($"Squad movement order issued to: {targetPosition}");
+
+                    return;
+                }
+            }
+
+            // Otherwise move individual unit.
             if (entityManager.HasComponent<Destination>(selectedEntity))
             {
                 entityManager.SetComponentData(
@@ -245,6 +270,7 @@ public class UnitCommandInput : MonoBehaviour
                 Debug.Log($"Move command issued to: {targetPosition}");
             }
         }
+
     }
 
     private void Update()
@@ -262,9 +288,13 @@ public class UnitCommandInput : MonoBehaviour
         // G assigns unit to alpha squad
         if (Input.GetKeyDown(KeyCode.G)) 
         {
-            AssignSelectedUnitToSquad();
+            AssignSelectedUnitToSquad(0);
         }
-
+        // F assigns unit to alpha squad
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            AssignSelectedUnitToSquad(1);
+        }
         // Right-click selects a unit.
         if (Input.GetMouseButtonDown(1))
         {

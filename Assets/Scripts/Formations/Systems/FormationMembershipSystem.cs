@@ -3,6 +3,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine.Assertions.Must;
+using Unity.Mathematics;
 
 [BurstCompile]
 public partial class FormationMembershipSystem : SystemBase 
@@ -79,10 +80,17 @@ public partial class FormationMembershipSystem : SystemBase
             membership.value_ = newSquad;
 
             EntityManager.SetComponentData(unit, membership);
-            EntityManager.RemoveComponent<FormationAssignmentRequest>(unit);
 
-            Debug.Log($"Membership after assignment: {EntityManager.GetComponentData<FormationMembership>(unit).value_}");
-            Debug.Log($"New squad buffer length after assignment: {EntityManager.GetBuffer<SquadMember>(newSquad).Length}");
+            // Initialise formation offset if it doesnt already exist on unit
+            if (!EntityManager.HasComponent<FormationOffset>(unit)) 
+            {
+                EntityManager.AddComponentData(unit, new FormationOffset
+                {
+                    value_ = float3.zero
+                });
+            }
+
+            EntityManager.RemoveComponent<FormationAssignmentRequest>(unit);
         }
 
     }

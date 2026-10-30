@@ -31,8 +31,11 @@ public struct Selected : IComponentData
 
 }
 
-
+/// <summary>
+/// Marker entity lives here, to show assigned or not
+/// </summary>
 public struct SquadMarker : IComponentData 
 {
     public Entity value_;
 }
+

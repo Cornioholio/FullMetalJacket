@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Entities;
 using Unity.Collections;
+using Unity.Mathematics;
 
 public class SquadAuthoring : MonoBehaviour
 {
@@ -16,9 +17,14 @@ public class SquadAuthoring : MonoBehaviour
             AddComponent(squadEntity, new Squad
             {
                 name_ = new FixedString64Bytes(authoring.squadName),
-                teamID_ = authoring.teamID
+                teamID_ = authoring.teamID,
+                colour_ = FormationColourUtility.GetColour(authoring.teamID)
             });
-
+            AddComponent(squadEntity, new SquadMovementOrder
+            {
+                destination_ = float3.zero,
+                active_ = false
+            });
             AddBuffer<SquadMember>(squadEntity);
         }
     }

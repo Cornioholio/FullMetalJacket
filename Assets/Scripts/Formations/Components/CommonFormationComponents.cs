@@ -1,4 +1,5 @@
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 /// <summary>
@@ -10,9 +11,17 @@ public struct FormationAssignmentRequest : IComponentData
 }
 
 /// <summary>
-/// Records what squad a unit belongs to, owned by every unit.
+/// Records what formation a child formation (or unit) belongs to
 /// </summary>
 public struct FormationMembership : IComponentData
 {
     public Entity value_;
+}
+
+/// <summary>
+/// Child formation (or unit)'s assigned position in a formation
+/// </summary>
+public struct FormationOffset : IComponentData
+{
+    public float3 value_;
 }
