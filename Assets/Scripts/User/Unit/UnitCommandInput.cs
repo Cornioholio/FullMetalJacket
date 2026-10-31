@@ -175,14 +175,26 @@ public class UnitCommandInput : MonoBehaviour
         };
 
         // Cast the ray into the ECS physics world.
+        Debug.Log($"Physics bodies: {physicsWorld.CollisionWorld.NumBodies}");
+        Debug.Log($"Ray origin: {ray.origin}");
+        Debug.Log($"Ray direction: {ray.direction}");
+
+        // Cast the ray into the ECS physics world.
         if (!physicsWorld.CollisionWorld.CastRay(
             raycastInput, out Unity.Physics.RaycastHit hit))
         {
-            Debug.Log("Selection cleared.");
+            Debug.LogWarning("RAYCAST FAILED: No ECS physics body was hit.");
             return;
         }
 
         Entity hitEntity = hit.Entity;
+
+        Debug.Log($"Hit entity: {hitEntity}");
+
+        Debug.Log($"Has LocalTransform: {entityManager.HasComponent<LocalTransform>(hitEntity)}");
+        Debug.Log($"Has Health: {entityManager.HasComponent<Health>(hitEntity)}");
+        Debug.Log($"Has SquadMarker: {entityManager.HasComponent<SquadMarker>(hitEntity)}");
+        Debug.Log($"Has FormationMembership: {entityManager.HasComponent<FormationMembership>(hitEntity)}");
 
         // Only select entities that can receive movement commands.
         if (!entityManager.Exists(hitEntity) ||
@@ -219,24 +231,43 @@ public class UnitCommandInput : MonoBehaviour
 
         if (mainCamera == null)
         {
+            Debug.LogError("MOVEMENT FAILED: No main camera found.");
             return;
         }
 
+        Debug.Log("Movement camera found.");
+
         UnityEngine.Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
 
-        // Use the existing GameObject physics raycast for the ground.
-        if (Physics.Raycast(ray, out UnityEngine.RaycastHit hitInfo))
+        PhysicsWorldSingleton physicsWorld = physicsWorldQuery.GetSingleton<PhysicsWorldSingleton>();
+
+        RaycastInput raycastInput = new RaycastInput
         {
+            Start = ray.origin,
+            End = ray.origin + ray.direction * 1000f,
+            Filter = new CollisionFilter 
+            {
+                BelongsTo = ~0u,
+                CollidesWith = ~0u,
+                GroupIndex = 0
+            }
+        };
+
+        // Use the existing GameObject physics raycast for the ground.
+        if (physicsWorld.CollisionWorld.CastRay(raycastInput, out Unity.Physics.RaycastHit hitInfo))
+        {
+
             float3 targetPosition = new float3(
-                hitInfo.point.x,
+                hitInfo.Position.x,
                 entityManager.GetComponentData<LocalTransform>(selectedEntity).Position.y,
-                hitInfo.point.z);
+                hitInfo.Position.z);
 
             // Check if selected is a 
             if (entityManager.HasComponent<FormationMembership>(selectedEntity)) 
             {
+                Debug.Log($"Has FormationMembership: {entityManager.HasComponent<FormationMembership>(selectedEntity)}");
                 FormationMembership membership = entityManager.GetComponentData<FormationMembership>(selectedEntity);
-
+                Debug.Log($"Squad entity: {membership.value_}");
                 Entity squadEntity = membership.value_;
 
                 // Validate squad membership
@@ -269,6 +300,9 @@ public class UnitCommandInput : MonoBehaviour
 
                 Debug.Log($"Move command issued to: {targetPosition}");
             }
+        } else
+        {
+            Debug.LogWarning("MOVEMENT FAILED: Ground raycast did not hit anything.");
         }
 
     }
@@ -298,12 +332,14 @@ public class UnitCommandInput : MonoBehaviour
         // Right-click selects a unit.
         if (Input.GetMouseButtonDown(1))
         {
+            Debug.Log("RIGHT CLICK DETECTED");
             SelectUnit();
         }
 
         // Left-click moves the selected unit.
         if (Input.GetMouseButtonDown(0))
         {
+            Debug.Log("LEFT CLICK DETECTED");
             MoveSelectedUnit();
         }
     }
