@@ -14,7 +14,10 @@ public struct MovementSpeed : IComponentData
 {
     public float value_;
 }
-
+public struct FacingDirection : IComponentData 
+{
+    public quaternion value_;
+}
 /// <summary>
 /// Holds unit target move destination given by commander.
 /// </summary>
@@ -35,6 +38,10 @@ public struct Selected : IComponentData
 /// Marker entity lives here, to show assigned or not
 /// </summary>
 public struct SquadMarker : IComponentData 
+{
+    public Entity value_;
+}
+public struct FacingIndicator : IComponentData 
 {
     public Entity value_;
 }

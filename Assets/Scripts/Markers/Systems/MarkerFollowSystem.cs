@@ -36,6 +36,11 @@ public partial struct MarkerFollowSystem : ISystem
             LocalTransform ownerTransform = SystemAPI.GetComponent<LocalTransform>(owner);
 
             markerTransform.ValueRW.Position = ownerTransform.Position + markerOffset.ValueRO.value_;
+
+            if (markerOwner.ValueRO.type_ == MarkerType.DirectionSelection) 
+            {
+                markerTransform.ValueRW.Rotation = ownerTransform.Rotation;
+            }
         }
     }
 }

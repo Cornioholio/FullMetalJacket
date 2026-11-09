@@ -1,34 +1,48 @@
 ﻿using UnityEngine;
 using Unity.Entities;
 using Unity.Mathematics;
+using JetBrains.Annotations;
+using System.Collections.Generic;
 
 public class MarkerPrefabAuthoring : MonoBehaviour
 {
-    public GameObject markerPrefab;
-    public Vector3 markerOffset = new Vector3(0f, 1.5f, 0f);
+    [System.Serializable]
+    public class MarkerEntry 
+    {
+        public GameObject markerPrefab;
+        public MarkerType markerType;
+        public Vector3 markerOffset;
+    }
+
+    public List<MarkerEntry> markers = new List<MarkerEntry>();
 
     private class Baker : Baker<MarkerPrefabAuthoring> 
     {
         public override void Bake(MarkerPrefabAuthoring authoring)
-        {
+        {   
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
 
-            // Store which prefab the entity should use for marker
-            AddComponent(entity, new MarkerPrefabReference
-            {
-                value_ = GetEntity(authoring.markerPrefab, TransformUsageFlags.Dynamic)
-            });
+            DynamicBuffer<MarkerPrefabReference> prefabBuffer = AddBuffer<MarkerPrefabReference>(entity);
 
-            // Store desired offset
-            AddComponent(entity, new MarkerOffset
-            {
-                value_ = new float3(authoring.markerOffset.x, authoring.markerOffset.y, authoring.markerOffset.z)
-            });
+            AddBuffer<MarkerInstanceReference>(entity);
 
-            AddComponent(entity, new MarkerInstanceReference
+            foreach (MarkerEntry marker in authoring.markers) 
             {
-                value_ = Entity.Null
-            });
+                if (marker.markerPrefab == null)
+                {
+                    continue;
+                }
+
+                prefabBuffer.Add(new MarkerPrefabReference
+                {
+                    value_ = GetEntity(marker.markerPrefab, TransformUsageFlags.Dynamic),
+                    offset_ = new float3(
+                        marker.markerOffset.x,
+                        marker.markerOffset.y,
+                        marker.markerOffset.z),
+                    type_ = marker.markerType
+                });
+            } 
         }
     }
 }

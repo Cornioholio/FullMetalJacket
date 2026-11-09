@@ -31,6 +31,10 @@ public class UnitAuthoring : MonoBehaviour
             {
                 value_ = Entity.Null
             });
+            AddComponent(entity, new FacingDirection
+            {
+                value_ = quaternion.identity
+            });
         }
     }
 }

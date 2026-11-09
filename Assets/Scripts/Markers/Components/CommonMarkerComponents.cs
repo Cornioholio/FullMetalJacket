@@ -1,12 +1,18 @@
 using Unity.Entities;
 using Unity.Mathematics;
 
+public enum MarkerType 
+{
+    DirectionSelection,
+    Squad
+}
 /// <summary>
 /// Identifies the entity the marker follows.
 /// </summary>
 public struct MarkerOwner : IComponentData 
 {
     public Entity value_;
+    public MarkerType type_;
 }
 
 /// <summary>
@@ -20,15 +26,18 @@ public struct MarkerOffset : IComponentData
 /// <summary>
 /// References the marker prefab used by an entity.
 /// </summary>
-public struct MarkerPrefabReference : IComponentData 
+public struct MarkerPrefabReference : IBufferElementData
 {
     public Entity value_;
+    public float3 offset_;
+    public MarkerType type_;
 }
 
 /// <summary>
-/// Stored the marker instance associated with an entity
+/// Stored the marker instance associated with an entitya
 /// </summary>
-public struct MarkerInstanceReference : IComponentData 
+public struct MarkerInstanceReference : IBufferElementData 
 {
     public Entity value_;
+    public Entity instance_;
 }

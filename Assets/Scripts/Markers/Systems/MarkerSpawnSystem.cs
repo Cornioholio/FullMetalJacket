@@ -13,7 +13,6 @@ public partial class MarkerSpawnSystem : SystemBase
         // Find entities that have a prefab reference but no marker instance
         EntityQuery query = GetEntityQuery(
             ComponentType.ReadOnly<MarkerPrefabReference>(),
-            ComponentType.ReadOnly<MarkerOffset>(),
             ComponentType.ReadWrite<MarkerInstanceReference>());
 
         // Gather entities first
@@ -21,60 +20,102 @@ public partial class MarkerSpawnSystem : SystemBase
 
         foreach (Entity owner in entities) 
         {
-            MarkerInstanceReference instanceReference = EntityManager.GetComponentData<MarkerInstanceReference>(owner);
+            using var prefabReferences = EntityManager.GetBuffer<MarkerPrefabReference>(owner).ToNativeArray(Unity.Collections.Allocator.Temp);
 
-            // A marker has already been spawned
-            if (instanceReference.value_ != Entity.Null && EntityManager.Exists(instanceReference.value_))
+            DynamicBuffer<MarkerInstanceReference> instanceBuffer = EntityManager.GetBuffer<MarkerInstanceReference>(owner);
+            
+            while (instanceBuffer.Length < prefabReferences.Length) 
             {
-                continue;
-            }
-
-            MarkerPrefabReference prefabReference = EntityManager.GetComponentData<MarkerPrefabReference>(owner);
-
-            // Avoid instantiating an invalid prefab reference
-            if (prefabReference.value_ == Entity.Null && !EntityManager.Exists(prefabReference.value_)) 
-            {
-                continue;
-            }
-
-            // Create a runtime instance of marker prefab
-            Entity marker = EntityManager.Instantiate(prefabReference.value_);
-
-            if (!EntityManager.HasComponent<URPMaterialPropertyBaseColor>(marker)) 
-            {
-                EntityManager.AddComponentData(marker, new URPMaterialPropertyBaseColor
+                instanceBuffer.Add(new MarkerInstanceReference
                 {
-                    Value = new float4(0.75f, 0.75f, 0.75f, 1f)
+                    value_ = Entity.Null,
+                    instance_ = Entity.Null
                 });
             }
 
-            // Link the marker to the owner
-            EntityManager.AddComponentData(marker, new MarkerOwner
+            for (int i = 0; i < prefabReferences.Length; i++) 
             {
-                value_ = owner
-            });
+                MarkerPrefabReference prefabReference = prefabReferences[i];
 
-            // Give the marker its configured vertical offset
-            MarkerOffset offset = EntityManager.GetComponentData<MarkerOffset>(owner);
-            EntityManager.AddComponentData(marker, offset);
+                if (prefabReference.value_ == Entity.Null ||
+                    !EntityManager.Exists(prefabReference.value_)) 
+                {
+                    continue;
+                }
 
-            // Store the spawned marker so we dont spawn it again
-            EntityManager.SetComponentData(owner, new MarkerInstanceReference
-            {
-                value_ = owner
-            });
+                instanceBuffer = EntityManager.GetBuffer<MarkerInstanceReference>(owner);
 
-            // Start the marker at the owner's current position 
-            if (EntityManager.HasComponent<LocalTransform>(owner) &&
-                EntityManager.HasComponent<LocalTransform>(marker)) 
-            {
-                LocalTransform ownerTransform = EntityManager.GetComponentData<LocalTransform>(owner);
+                MarkerInstanceReference instanceReference = instanceBuffer[i];
 
-                LocalTransform markerTransform = EntityManager.GetComponentData<LocalTransform>(marker);
+                if (instanceReference.value_ == prefabReference.value_ && 
+                    instanceReference.instance_ != Entity.Null &&
+                    EntityManager.Exists(instanceReference.instance_)) 
+                {
+                    continue;
+                }
 
-                markerTransform.Position = ownerTransform.Position + offset.value_;
+                if (instanceReference.instance_ != Entity.Null && 
+                    EntityManager.Exists(instanceReference.instance_ )) 
+                {
+                    EntityManager.DestroyEntity(instanceReference.instance_);
+                }
 
-                EntityManager.SetComponentData(marker, markerTransform);
+                Entity marker = EntityManager.Instantiate(prefabReference.value_);
+
+                if (!EntityManager.HasComponent<URPMaterialPropertyBaseColor>(marker)) 
+                {
+                    EntityManager.AddComponentData(marker, new URPMaterialPropertyBaseColor
+                    {
+                        Value = new float4(0.75f, 0.75f, 0.75f, 1f)
+                    });
+                }
+
+                MarkerOwner markerOwner = new MarkerOwner
+                {
+                    value_ = owner,
+                    type_ = prefabReference.type_
+                };
+
+                if (EntityManager.HasComponent<MarkerOwner>(marker)) 
+                {
+                    EntityManager.SetComponentData(marker, markerOwner);
+                } else 
+                {
+                    EntityManager.AddComponentData(marker, markerOwner);
+                }
+
+                MarkerOffset markerOffset = new MarkerOffset
+                {
+                    value_ = prefabReference.offset_
+                };
+
+                if (EntityManager.HasComponent<MarkerOffset>(marker)) 
+                {
+                    EntityManager.SetComponentData(marker, markerOffset);
+                } else 
+                {
+                    EntityManager.AddComponentData(marker, markerOffset);
+                }
+
+                instanceBuffer = EntityManager.GetBuffer<MarkerInstanceReference>(owner);
+
+                instanceBuffer[i] = new MarkerInstanceReference
+                {
+                    value_ = prefabReference.value_,
+                    instance_ = marker
+                };
+
+                if (EntityManager.HasComponent<LocalTransform>(owner) &&
+                    EntityManager.HasComponent<LocalTransform>(marker)) 
+                {
+                    LocalTransform ownerTransform = EntityManager.GetComponentData<LocalTransform>(owner);
+
+                    LocalTransform markerTransform = EntityManager.GetComponentData<LocalTransform>(marker);
+
+                    markerTransform.Position = ownerTransform.Position + prefabReference.offset_;
+
+                    EntityManager.SetComponentData(marker, markerTransform);
+                }
             }
         }
 

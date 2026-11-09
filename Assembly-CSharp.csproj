@@ -84,9 +84,9 @@
     <Compile Include="Assets\Scripts\Markers\Systems\MarkerSpawnSystem.cs" />
     <Compile Include="Assets\Scripts\Formations\Systems\FormationLayoutSystem.cs" />
     <Compile Include="Assets\Scripts\Markers\Components\CommonMarkerComponents.cs" />
+    <Compile Include="Assets\Scripts\Markers\Systems\MarkerColourSystem.cs" />
     <Compile Include="Assets\Scripts\Unit\Components\CommonUnitComponents.cs" />
     <Compile Include="Assets\Scripts\Unit\UnitAuthoring.cs" />
-    <Compile Include="Assets\Scripts\Formations\Systems\FormationColourSystem.cs" />
     <Compile Include="Assets\Scripts\Unit\Systems\MovementSystem.cs" />
   </ItemGroup>
   <ItemGroup>

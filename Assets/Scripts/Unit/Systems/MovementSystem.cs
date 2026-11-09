@@ -11,7 +11,11 @@ public partial struct MovementSystem : ISystem
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
 
-        foreach (var (transform, speed, destination) in SystemAPI.Query<RefRW<LocalTransform>, RefRO<MovementSpeed>, RefRO<Destination>>())
+        foreach (var (transform, speed, destination, facing) in SystemAPI.Query<
+            RefRW<LocalTransform>, 
+            RefRO<MovementSpeed>, 
+            RefRO<Destination>,
+            RefRW<FacingDirection>>())
         {
             float step = speed.ValueRO.value_ * deltaTime;
 
@@ -19,11 +23,24 @@ public partial struct MovementSystem : ISystem
             float3 targetPosition = destination.ValueRO.value_;
 
             float3 direction = targetPosition - currentPosition;
+            direction.y = 0f;
+
             float distance = math.length(direction);
 
             if (distance > 0.01f)
             {
-                float3 movement = math.normalize(direction) * math.min(step, distance);
+                // Calculate and apply facing rotation.
+                float3 facingDirection = math.normalize(direction);
+
+                quaternion targetRotation = quaternion.LookRotationSafe(
+                    facingDirection,
+                    math.up());
+
+                facing.ValueRW.value_ = targetRotation;
+                transform.ValueRW.Rotation = targetRotation;
+
+                // Move towards destination.
+                float3 movement = facingDirection * math.min(step, distance);
 
                 transform.ValueRW.Position += movement;
             }
