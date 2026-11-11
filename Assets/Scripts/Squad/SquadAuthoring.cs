@@ -25,6 +25,29 @@ public class SquadAuthoring : MonoBehaviour
                 destination_ = float3.zero,
                 active_ = false
             });
+            AddComponent(squadEntity, new SquadFormationChangeRequest
+            {
+                requestedType_ = SquadFormationType.Defensive,
+                pending_ = false,
+                rejected_ = false
+            });
+            AddComponent(squadEntity, new SquadFormation
+            {
+                type_ = SquadFormationType.Defensive
+            });
+            AddComponent(squadEntity, new FormationSettings
+            {
+                layoutType_ = SquadFormationLayoutType.Grid,
+                spacing_ = 2f,
+                depthSpacing_ = 2f,
+                columns_ = 4,
+                dirty_ = true
+            });
+            AddComponent(squadEntity, new SquadCombatState
+            {
+                inCombat_ = false
+            });
+
             AddBuffer<SquadMember>(squadEntity);
         }
     }

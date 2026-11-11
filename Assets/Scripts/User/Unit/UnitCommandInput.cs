@@ -7,6 +7,14 @@ using Unity.Transforms;
 
 public class UnitCommandInput : MonoBehaviour 
 {
+    private enum CommandMode 
+    {
+        Individual,
+        Squad
+    }
+
+    private CommandMode commandMode = CommandMode.Individual;
+
     private World entityWorld;
     private bool isInitialised;
 
@@ -14,7 +22,7 @@ public class UnitCommandInput : MonoBehaviour
     private EntityQuery unitQuery;
     private EntityQuery squadQuery;
     private EntityQuery physicsWorldQuery;
-
+    private Entity pendingFormationSquad = Entity.Null;
     private Entity selectedEntity = Entity.Null;
 
     private void InitialiseECS()
@@ -262,20 +270,21 @@ public class UnitCommandInput : MonoBehaviour
                 entityManager.GetComponentData<LocalTransform>(selectedEntity).Position.y,
                 hitInfo.Position.z);
 
-            // Check if selected is a 
-            if (entityManager.HasComponent<FormationMembership>(selectedEntity)) 
+            if (commandMode == CommandMode.Squad &&
+                entityManager.HasComponent<FormationMembership>(selectedEntity))
             {
-                Debug.Log($"Has FormationMembership: {entityManager.HasComponent<FormationMembership>(selectedEntity)}");
-                FormationMembership membership = entityManager.GetComponentData<FormationMembership>(selectedEntity);
-                Debug.Log($"Squad entity: {membership.value_}");
+                FormationMembership membership =
+                    entityManager.GetComponentData<FormationMembership>(selectedEntity);
+
                 Entity squadEntity = membership.value_;
 
-                // Validate squad membership
+                // Validate squad membership and movement order.
                 if (squadEntity != Entity.Null &&
                     entityManager.Exists(squadEntity) &&
                     entityManager.HasComponent<SquadMovementOrder>(squadEntity))
                 {
-                    SquadMovementOrder movementOrder = entityManager.GetComponentData<SquadMovementOrder>(squadEntity);
+                    SquadMovementOrder movementOrder =
+                        entityManager.GetComponentData<SquadMovementOrder>(squadEntity);
 
                     movementOrder.destination_ = targetPosition;
                     movementOrder.active_ = true;
@@ -283,12 +292,13 @@ public class UnitCommandInput : MonoBehaviour
                     entityManager.SetComponentData(squadEntity, movementOrder);
 
                     Debug.Log($"Squad movement order issued to: {targetPosition}");
-
                     return;
                 }
+
+                Debug.LogWarning("Selected unit has no valid squad movement order.");
             }
 
-            // Otherwise move individual unit.
+            // Only the selected soldier receives this destination.
             if (entityManager.HasComponent<Destination>(selectedEntity))
             {
                 entityManager.SetComponentData(
@@ -298,7 +308,7 @@ public class UnitCommandInput : MonoBehaviour
                         value_ = targetPosition
                     });
 
-                Debug.Log($"Move command issued to: {targetPosition}");
+                Debug.Log($"Individual movement order issued to: {targetPosition}");
             }
         } else
         {
@@ -306,7 +316,102 @@ public class UnitCommandInput : MonoBehaviour
         }
 
     }
+    private void RequestSquadFormationChange(SquadFormationType requestedType)
+    {
+        // Ensure a valid soldier is selected.
+        if (selectedEntity == Entity.Null ||
+            !entityManager.Exists(selectedEntity))
+        {
+            Debug.LogWarning("Select a squad member first.");
+            return;
+        }
 
+        // The selected soldier must belong to a squad.
+        if (!entityManager.HasComponent<FormationMembership>(selectedEntity))
+        {
+            Debug.LogWarning("Selected unit does not belong to a squad.");
+            return;
+        }
+
+        FormationMembership membership =
+            entityManager.GetComponentData<FormationMembership>(selectedEntity);
+
+        Entity squadEntity = membership.value_;
+
+        if (squadEntity == Entity.Null ||
+            !entityManager.Exists(squadEntity))
+        {
+            Debug.LogWarning("Selected unit has invalid squad membership.");
+            return;
+        }
+
+        // Ensure the squad supports formation changes.
+        if (!entityManager.HasComponent<SquadFormationChangeRequest>(squadEntity))
+        {
+            Debug.LogError("Squad is missing FormationChangeRequest."); // HERE!!!!
+            return;
+        }
+
+        SquadFormationChangeRequest request =
+            entityManager.GetComponentData<SquadFormationChangeRequest>(squadEntity);
+
+        request.requestedType_ = requestedType;
+        request.pending_ = true;
+        request.rejected_ = false;
+
+        entityManager.SetComponentData(squadEntity, request);
+
+        pendingFormationSquad = squadEntity;
+
+        Debug.Log($"Requested formation change: {requestedType}");
+    }
+    private void CheckFormationChangeResult()
+    {
+        if (pendingFormationSquad == Entity.Null)
+        {
+            return;
+        }
+
+        if (!entityManager.Exists(pendingFormationSquad))
+        {
+            pendingFormationSquad = Entity.Null;
+            return;
+        }
+
+        SquadFormationChangeRequest request =
+            entityManager.GetComponentData<SquadFormationChangeRequest>(
+                pendingFormationSquad);
+
+        // Wait for FormationChangeSystem to process the request.
+        if (request.pending_)
+        {
+            return;
+        }
+
+        if (request.rejected_)
+        {
+            Debug.LogWarning(
+                "FORMATION REJECTED: Squad is in combat or formation is invalid.");
+
+            request.rejected_ = false;
+
+            entityManager.SetComponentData(
+                pendingFormationSquad,
+                request);
+        }
+        else
+        {
+            Debug.Log("Formation successfully changed.");
+        }
+
+        pendingFormationSquad = Entity.Null;
+    }
+    private void ToggleCommandMode() 
+    {
+        commandMode = commandMode == CommandMode.Individual ? CommandMode.Squad : CommandMode.Individual;
+
+        Debug.Log($"Command mode changed to: {commandMode}");
+    }
     private void Update()
     {
         if (!isInitialised) 
@@ -318,7 +423,12 @@ public class UnitCommandInput : MonoBehaviour
                 return;
             }
         }
+        CheckFormationChangeResult();
 
+        if (Input.GetKeyDown(KeyCode.Tab)) 
+        {
+            ToggleCommandMode();
+        }
         // G assigns unit to alpha squad
         if (Input.GetKeyDown(KeyCode.G)) 
         {
@@ -329,6 +439,27 @@ public class UnitCommandInput : MonoBehaviour
         {
             AssignSelectedUnitToSquad(1);
         }
+        // Formation selection
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            RequestSquadFormationChange(SquadFormationType.Offensive);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            RequestSquadFormationChange(SquadFormationType.Defensive);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            RequestSquadFormationChange(SquadFormationType.CQB);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha4))
+        {
+            RequestSquadFormationChange(SquadFormationType.DigIn);
+        }
+
         // Right-click selects a unit.
         if (Input.GetMouseButtonDown(1))
         {

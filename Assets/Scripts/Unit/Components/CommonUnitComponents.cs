@@ -2,6 +2,12 @@ using Unity.Entities;
 using Unity.Mathematics;
 
 // !! Components given to ALL units by default live here !!
+public struct UnitBaseStats : IComponentData 
+{
+    public float accuracy_;
+    public float defense_;
+    public float suppressionResistance_;
+}
 
 public struct Health : IComponentData
 {

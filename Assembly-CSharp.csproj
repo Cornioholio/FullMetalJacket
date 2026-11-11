@@ -78,6 +78,7 @@
     <Compile Include="Assets\Scripts\Formations\Components\CommonFormationComponents.cs" />
     <Compile Include="Assets\Scripts\Squad\SquadAuthoring.cs" />
     <Compile Include="Assets\Scripts\Markers\MarkerPrefabAuthoring.cs" />
+    <Compile Include="Assets\Scripts\Formations\Systems\FormationChangeSystem.cs" />
     <Compile Include="Assets\Scripts\User\Unit\UnitCommandInput.cs" />
     <Compile Include="Assets\Scripts\Formations\Systems\FormationMembershipSystem.cs" />
     <Compile Include="Assets\Scripts\Squad\Components\CommonSquadComponents.cs" />
